@@ -1,0 +1,83 @@
+{ type Component, createSignal } from "solid-js"
+{ onFrame } from "./utils/onFrame.civet"
+
+operator { addEventListener: onDocEvent } := document
+
+ballHeight := 50
+ballRadius := ballHeight / 2
+paddleHeight := 200
+paddleRadius := paddleHeight / 2
+minPaddleCenter := paddleRadius
+maxPaddleCenter := window.innerHeight - paddleRadius
+totalBallVelocity := 300
+[ballAttached, setBallAttached] := createSignal(true)
+[ballX, setBallX] := createSignal(50)
+[ballY, setBallY] := createSignal(window.innerHeight / 2 - ballRadius)
+[ballVelocityX, setBallVelocityX] := createSignal(0)
+[ballVelocityY, setBallVelocityY] := createSignal(0)
+[paddleCenter, setPaddleCenter] := createSignal(0)
+
+App: Component := =>
+  <Ball>
+  <Player>
+
+Ball: Component := =>
+  lastFrameTime .= new Date().getTime()
+  onFrame (=>
+    now := new Date().getTime()
+    duration := (now - lastFrameTime) / 1000
+    lastFrameTime = now
+    if ballAttached()
+      return
+    setBallX do
+      x := ballX() + ballVelocityX() * duration
+      x
+    setBallY do
+      y := ballY() + ballVelocityY() * duration
+      y
+    return
+  )
+
+  <div style={
+    width: `${ballHeight}px`
+    height: `${ballHeight}px`
+    background: "white"
+    "border-radius": "50%"
+    top: 0
+    left: 0
+    position: "fixed"
+    "will-change": "transform"
+    transform: `translateX(calc(${ballX()}px - 50%)) translateY(calc(${ballY()}px - 50%))`
+  }>
+
+Player := => 
+  "mousemove" onDocEvent (({ clientY }) =>
+    setPaddleCenter do
+      if clientY < minPaddleCenter then minPaddleCenter
+      else if clientY > maxPaddleCenter then maxPaddleCenter
+      else clientY
+  )
+
+  "click" onDocEvent (=> 
+    if (
+      ballAttached()
+      and ballY() > paddleCenter() - paddleRadius 
+      and ballY() < paddleCenter() + paddleRadius
+    )
+      setBallAttached(false)
+      setBallVelocityY(totalBallVelocity * (ballY() - paddleCenter()) / paddleRadius)
+      setBallVelocityX((totalBallVelocity - Math.abs(ballVelocityY())))
+  )
+
+  <div style={
+    width: "25px"
+    height: `${paddleHeight}px`
+    background: "white"
+    position: "fixed"
+    left: 0
+    top: 0,
+    "will-change": "transform"
+    transform: `translateY(calc(${paddleCenter()}px - 50%))`
+  }>
+
+export default App

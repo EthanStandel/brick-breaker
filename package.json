@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "@danielx/civet": "^0.5.87",
+    "vite-plugin-civet": "^0.2.6"
+  }
+}
