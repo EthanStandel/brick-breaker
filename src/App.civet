@@ -302,7 +302,7 @@ GameStatus := =>
         <rect x="30" y="00" width="20" height="50" fill="white" />
 
 GithubLink := =>
-  <a href="https://github.com/EthanStandel/pong/blob/main/src/App.civet"
+  <a href="https://github.com/EthanStandel/brick-breaker/blob/main/src/App.civet"
     style={
       position: "fixed"
       bottom: "25px"
