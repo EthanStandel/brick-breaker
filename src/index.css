@@ -1,6 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@700&display=swap");
 
+html,
 body {
+  overscroll-behavior: none;
   margin: 0;
   font-family: "Josefin Sans", sans-serif;
   -webkit-font-smoothing: antialiased;
