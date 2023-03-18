@@ -9,4 +9,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background: black;
   touch-action: none;
+  position: fixed;
+  overflow: hidden;
 }
