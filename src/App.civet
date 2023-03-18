@@ -21,8 +21,8 @@ paddleWidth := 200
 paddleRadius := paddleWidth / 2
 minPaddleCenter := paddleRadius
 maxPaddleCenter := => window.innerWidth - paddleRadius
-initialVelocity := => Math.min window.innerHeight, window.innerWidth
-totalBallVelocity := => initialVelocity() + (100 * score())
+initialVelocity := => Math.max window.innerHeight, window.innerWidth
+totalBallVelocity := => initialVelocity() * (1  + .05 * score())
 [score, setScore] := createSignal 0
 [gameState, setGameState] := createSignal<"PLAYING" | "PAUSED" | "LOSER"> "PLAYING"
 gameStopped := => gameState() is not "PLAYING"
@@ -114,25 +114,28 @@ Ball: Component := =>
     "box-shadow": `${-ballVelocityX() / 100}px ${-ballVelocityY() / 100}px 20px -20px white`
     transform: `translateY(calc(${ballY()}px - 50%)) translateX(calc(${ballX()}px - 50%))`
   }>
-    <div style={
-      background: "linear-gradient(270deg, white, transparent)"
-      position: "absolute"
-      top: "50%"
-      left: "50%"
-      transform: do
-        radians := Math.atan2(ballVelocityY(), ballVelocityX())
-        trail := totalBallVelocity() / 20 / 2 - ballWidth / 2
-        ```
-          translate(
-            calc(-50% + ${trail * -Math.cos(radians)}px),
-            calc(-50% + ${trail * -Math.sin(radians)}px)
-          )
-          rotate(${radians}rad)
-        ```
-      height: `${ballWidth}px`
-      width: `${(Math.abs(ballVelocityX()) + Math.abs(ballVelocityY())) / 20}px`
-      "border-radius": `${ballRadius}px`
-      "z-index": -1
+    <div style={do
+      trailSize := if ballAttached() then 0 else ballWidth * (1 + ((score() + 2) * .1))
+      {
+        background: "linear-gradient(270deg, white, transparent)"
+        position: "absolute"
+        top: "50%"
+        left: "50%"
+        transform: do
+          radians := Math.atan2(ballVelocityY(), ballVelocityX())
+          trail := trailSize / 2 - ballWidth / 2
+          ```
+            translate(
+              calc(-50% + ${trail * -Math.cos(radians)}px),
+              calc(-50% + ${trail * -Math.sin(radians)}px)
+            )
+            rotate(${radians}rad)
+          ```
+        height: `${ballWidth}px`
+        width: `${trailSize}px`
+        "border-radius": `${ballRadius}px`
+        "z-index": -1
+      }
     }>
 
 Player := => 
