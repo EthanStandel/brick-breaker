@@ -1,6 +1,5 @@
 { type Component, createSignal, Show, onCleanup } from "solid-js"
 
-
 docEvent := <K extends keyof DocumentEventMap>(
   type: K,
   listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions
@@ -15,24 +14,24 @@ onFrame := (callback: () => (boolean | void)) =>
       requestAnimationFrame onFrame
   requestAnimationFrame onFrame
 
-ballHeight := 50
-ballRadius := ballHeight / 2
-paddleWidth := 25
-paddleHeight := 200
-paddleRadius := paddleHeight / 2
+ballWidth := 50
+ballRadius := ballWidth / 2
+paddleHeight := 25
+paddleWidth := 200
+paddleRadius := paddleWidth / 2
 minPaddleCenter := paddleRadius
-maxPaddleCenter := => window.innerHeight - paddleRadius
-initialVelocity := => Math.min window.innerWidth, window.innerHeight
+maxPaddleCenter := => window.innerWidth - paddleRadius
+initialVelocity := => Math.min window.innerHeight, window.innerWidth
 totalBallVelocity := => initialVelocity() + (100 * score())
 [score, setScore] := createSignal 0
 [gameState, setGameState] := createSignal<"PLAYING" | "PAUSED" | "LOSER"> "PLAYING"
 gameStopped := => gameState() is not "PLAYING"
 [ballAttached, setBallAttached] := createSignal true
-[ballX, setBallX] := createSignal paddleWidth + ballRadius
-[ballY, setBallY] := createSignal window.innerHeight / 2
-[ballVelocityX, setBallVelocityX] := createSignal 0
+[ballY, setBallY] := createSignal window.innerHeight - paddleHeight - ballRadius
+[ballX, setBallX] := createSignal window.innerWidth / 2
 [ballVelocityY, setBallVelocityY] := createSignal 0
-[paddleCenter, setPaddleCenter] := createSignal window.innerHeight / 2
+[ballVelocityX, setBallVelocityX] := createSignal 0
+[paddleCenter, setPaddleCenter] := createSignal window.innerWidth / 2
 togglePause := =>
   setGameState do
     if gameState() is "PLAYING"
@@ -44,11 +43,11 @@ resetGame := =>
   setTimeout (=>
     setGameState "PLAYING"
     setBallAttached true
-    setBallX paddleWidth + ballRadius
-    setBallY window.innerHeight / 2
-    setBallVelocityX 0
+    setBallY window.innerHeight - paddleHeight - ballRadius
+    setBallX window.innerWidth / 2
     setBallVelocityY 0
-    setPaddleCenter window.innerHeight / 2
+    setBallVelocityX 0
+    setPaddleCenter window.innerWidth / 2
     setScore 0
   ), 0
 pauseOrReset := =>
@@ -58,12 +57,12 @@ pauseOrReset := =>
     togglePause()
 
 isMakingContact := =>
-  ballY() > paddleCenter() - paddleRadius and ballY() < paddleCenter() + paddleRadius
+  ballX() > paddleCenter() - paddleRadius and ballX() < paddleCenter() + paddleRadius
 
 launch := =>
   setBallAttached(false)
-  setBallVelocityY(1 + totalBallVelocity() * (ballY() - paddleCenter()) / paddleRadius)
-  setBallVelocityX(1 + (totalBallVelocity() - Math.abs(ballVelocityY())))
+  setBallVelocityX(1 + totalBallVelocity() * (ballX() - paddleCenter()) / paddleRadius)
+  setBallVelocityY(-1 + (-totalBallVelocity() + Math.abs(ballVelocityX())))
 
 App: Component := =>
   <Ball>
@@ -77,72 +76,93 @@ Ball: Component := =>
     now := new Date().getTime()
     duration := (now - lastFrameTime) / 1000
     lastFrameTime = now
-    if !ballAttached() and !gameStopped()
-      nextX := ballX() + ballVelocityX() * duration
-      if nextX > window.innerWidth - ballRadius
-        setBallVelocityX -ballVelocityX()
-        setBallX window.innerWidth - ballRadius
-      else if nextX < paddleWidth + ballRadius and isMakingContact()
-        setScore score() + 1
-        launch()
-      else if nextX < ballRadius
-        setBallX ballRadius
-        setGameState "LOSER"
-      else
-        setBallX nextX
+    if ballAttached() or gameStopped() return
+    nextY := ballY() + ballVelocityY() * duration
+    if nextY < ballRadius
+      setBallVelocityY -ballVelocityY()
+      setBallY ballRadius
+    else if nextY > window.innerHeight - paddleHeight - ballRadius and isMakingContact()
+      setScore score() + 1
+      launch()
+    else if nextY > window.innerHeight - ballRadius
+      setBallY window.innerHeight - ballRadius
+      setGameState "LOSER"
+    else
+      setBallY nextY
 
-      nextY := ballY() + ballVelocityY() * duration
-      if nextY > window.innerHeight - ballRadius
-        setBallVelocityY -ballVelocityY()
-        setBallY window.innerHeight - ballRadius
-      else if nextY < ballRadius
-        setBallVelocityY -ballVelocityY()
-        setBallY ballRadius
-      else
-        setBallY nextY
-      return
+    nextX := ballX() + ballVelocityX() * duration
+    if nextX > window.innerWidth - ballRadius
+      setBallVelocityX -ballVelocityX()
+      setBallX window.innerWidth - ballRadius
+    else if nextX < ballRadius
+      setBallVelocityX -ballVelocityX()
+      setBallX ballRadius
+    else
+      setBallX nextX
+    return
   )
 
   <div style={
-    width: `${ballHeight}px`
-    height: `${ballHeight}px`
+    height: `${ballWidth}px`
+    width: `${ballWidth}px`
     background: "white"
     "border-radius": "50%"
     top: 0
     left: 0
     position: "fixed"
     "will-change": "transform"
-    transform: `translateX(calc(${ballX()}px - 50%)) translateY(calc(${ballY()}px - 50%))`
+    "box-shadow": `${-ballVelocityX() / 100}px ${-ballVelocityY() / 100}px 20px -20px white`
+    transform: `translateY(calc(${ballY()}px - 50%)) translateX(calc(${ballX()}px - 50%))`
   }>
+    <div style={
+      background: "linear-gradient(270deg, white, transparent)"
+      position: "absolute"
+      top: "50%"
+      left: "50%"
+      transform: do
+        radians := Math.atan2(ballVelocityY(), ballVelocityX())
+        trail := totalBallVelocity() / 20 / 2 - ballWidth / 2
+        ```
+          translate(
+            calc(-50% + ${trail * -Math.cos(radians)}px),
+            calc(-50% + ${trail * -Math.sin(radians)}px)
+          )
+          rotate(${radians}rad)
+        ```
+      height: `${ballWidth}px`
+      width: `${(Math.abs(ballVelocityX()) + Math.abs(ballVelocityY())) / 20}px`
+      "border-radius": `${ballRadius}px`
+      "z-index": -1
+    }>
 
 Player := => 
-  movePlayer := (y: number) =>
+  movePlayer := (x: number) =>
     if gameStopped() return
     setPaddleCenter do
-      if y < minPaddleCenter then minPaddleCenter
-      else if y > maxPaddleCenter() then maxPaddleCenter()
-      else y
+      if x < minPaddleCenter then minPaddleCenter
+      else if x > maxPaddleCenter() then maxPaddleCenter()
+      else x
 
   docEvent "touchmove", (({ touches }) => 
-    movePlayer touches[0].clientY
+    movePlayer touches[0].clientX
   )
 
-  docEvent "mousemove", (({ clientY }) => 
-    movePlayer clientY
+  docEvent "mousemove", (({ clientX }) => 
+    movePlayer clientX
   )
 
   docEvent "click", (=> if isMakingContact() and ballAttached() then launch())
 
   <div style={
-    width: `${paddleWidth}px`
     height: `${paddleHeight}px`
+    width: `${paddleWidth}px`
     background: "white"
     position: "fixed"
     left: 0
-    top: 0
+    bottom: 0
     "pointer-events": "none"
     "will-change": "transform"
-    transform: `translateY(calc(${paddleCenter()}px - 50%))`
+    transform: `translateX(calc(${paddleCenter()}px - 50%))`
   }>
 
 GameStatus := =>
@@ -177,7 +197,7 @@ GameStatus := =>
       right: "25px"
     }
     onClick=pauseOrReset>
-    <svg height="50" width="50">
+    <svg width="50" height="50">
       <Show when={gameState() is "LOSER" or gameState() is "PAUSED"}>
         <polygon points="5,0 45,25 5,50" fill="white" />
       <Show when={gameState() is "PLAYING"}>
@@ -193,6 +213,6 @@ GithubLink := =>
     }
     target="_blank"
     rel="noopener noreferrer">
-    <img height="50" width="50" src="/github.svg">
+    <img width="50" height="50" src="/github.svg">
 
 export default App
