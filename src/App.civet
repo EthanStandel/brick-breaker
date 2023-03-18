@@ -1,5 +1,4 @@
 { type Component, createSignal, Show, onCleanup } from "solid-js"
-{ onFrame } from "./utils/onFrame.civet"
 
 
 docEvent := <K extends keyof DocumentEventMap>(
@@ -8,6 +7,14 @@ docEvent := <K extends keyof DocumentEventMap>(
 ) =>
   document.addEventListener type, listener
   onCleanup (=> document.removeEventListener type, listener)
+
+onFrame := (callback: () => (boolean | void)) =>
+  onFrame := =>
+    cancel := callback()
+    if !cancel
+      requestAnimationFrame onFrame
+  requestAnimationFrame onFrame
+
 ballHeight := 50
 ballRadius := ballHeight / 2
 paddleWidth := 25
@@ -62,6 +69,7 @@ App: Component := =>
   <Ball>
   <Player>
   <GameStatus>
+  <GithubLink>
 
 Ball: Component := =>
   lastFrameTime .= new Date().getTime()
@@ -78,6 +86,7 @@ Ball: Component := =>
         setScore score() + 1
         launch()
       else if nextX < ballRadius
+        setBallX ballRadius
         setGameState "LOSER"
       else
         setBallX nextX
@@ -174,5 +183,16 @@ GameStatus := =>
       <Show when={gameState() is "PLAYING"}>
         <rect x="0" y="0" width="20" height="50" fill="white" />
         <rect x="30" y="00" width="20" height="50" fill="white" />
+
+GithubLink := =>
+  <a href="https://github.com/EthanStandel/pong/blob/main/src/App.civet"
+    style={
+      position: "fixed"
+      bottom: "25px"
+      right: "25px"
+    }
+    target="_blank"
+    rel="noopener noreferrer">
+    <img height="50" width="50" src="/src/assets/github.svg">
 
 export default App
