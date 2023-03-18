@@ -8,15 +8,15 @@ docEvent := <K extends keyof DocumentEventMap>(
 ) =>
   document.addEventListener type, listener
   onCleanup (=> document.removeEventListener type, listener)
-
 ballHeight := 50
 ballRadius := ballHeight / 2
 paddleWidth := 25
 paddleHeight := 200
 paddleRadius := paddleHeight / 2
 minPaddleCenter := paddleRadius
-maxPaddleCenter := () => window.innerHeight - paddleRadius
-totalBallVelocity := () => Math.max(window.innerWidth, window.innerHeight)
+maxPaddleCenter := => window.innerHeight - paddleRadius
+initialVelocity := => Math.min window.innerWidth, window.innerHeight
+totalBallVelocity := => initialVelocity() + (100 * score())
 [score, setScore] := createSignal 0
 [gameState, setGameState] := createSignal<"PLAYING" | "PAUSED" | "LOSER"> "PLAYING"
 gameStopped := => gameState() is not "PLAYING"
@@ -34,13 +34,16 @@ togglePause := =>
       "PLAYING" 
     else gameState()
 resetGame := =>
-  setGameState "PLAYING"
-  setBallAttached true
-  setBallX paddleWidth + ballRadius
-  setBallY window.innerHeight / 2
-  setBallVelocityX 0
-  setBallVelocityY 0
-  setPaddleCenter window.innerHeight / 2
+  setTimeout (=>
+    setGameState "PLAYING"
+    setBallAttached true
+    setBallX paddleWidth + ballRadius
+    setBallY window.innerHeight / 2
+    setBallVelocityX 0
+    setBallVelocityY 0
+    setPaddleCenter window.innerHeight / 2
+    setScore 0
+  ), 0
 pauseOrReset := =>
   if gameState() is "LOSER"
     resetGame()
@@ -164,8 +167,7 @@ GameStatus := =>
       top: "25px"
       right: "25px"
     }
-    onClick=pauseOrReset
-  >
+    onClick=pauseOrReset>
     <svg height="50" width="50">
       <Show when={gameState() is "LOSER" or gameState() is "PAUSED"}>
         <polygon points="5,0 45,25 5,50" fill="white" />
