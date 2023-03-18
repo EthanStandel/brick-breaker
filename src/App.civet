@@ -193,6 +193,6 @@ GithubLink := =>
     }
     target="_blank"
     rel="noopener noreferrer">
-    <img height="50" width="50" src="/src/assets/github.svg">
+    <img height="50" width="50" src="/github.svg">
 
 export default App
