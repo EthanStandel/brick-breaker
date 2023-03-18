@@ -1,5 +1,6 @@
-{ type Component, createSignal, Show, onCleanup } from "solid-js"
+{ type Component, createSignal, Show, onCleanup, For } from "solid-js"
 
+// utils
 docEvent := <K extends keyof DocumentEventMap>(
   type: K,
   listener: (this: Document, ev: DocumentEventMap[K]) => any, options?: boolean | AddEventListenerOptions
@@ -14,24 +15,27 @@ onFrame := (callback: () => (boolean | void)) =>
       requestAnimationFrame onFrame
   requestAnimationFrame onFrame
 
-ballWidth := 50
-ballRadius := ballWidth / 2
-paddleHeight := 25
-paddleWidth := 200
+// player state
+paddleHeight := 20
+paddleWidth := 100
 paddleRadius := paddleWidth / 2
 minPaddleCenter := paddleRadius
 maxPaddleCenter := => window.innerWidth - paddleRadius
-initialVelocity := => Math.max window.innerHeight, window.innerWidth
-totalBallVelocity := => initialVelocity() * (1  + .05 * score())
-[score, setScore] := createSignal 0
-[gameState, setGameState] := createSignal<"PLAYING" | "PAUSED" | "LOSER"> "PLAYING"
-gameStopped := => gameState() is not "PLAYING"
+[paddleCenter, setPaddleCenter] := createSignal window.innerWidth / 2
+// ball state
+ballWidth := 20
+ballRadius := ballWidth / 2
+initialVelocity := => (Math.max window.innerHeight, window.innerWidth) / 2
+totalBallVelocity := initialVelocity
 [ballAttached, setBallAttached] := createSignal true
 [ballY, setBallY] := createSignal window.innerHeight - paddleHeight - ballRadius
 [ballX, setBallX] := createSignal window.innerWidth / 2
 [ballVelocityY, setBallVelocityY] := createSignal 0
 [ballVelocityX, setBallVelocityX] := createSignal 0
-[paddleCenter, setPaddleCenter] := createSignal window.innerWidth / 2
+// game state
+[score, setScore] := createSignal 0
+[gameState, setGameState] := createSignal<"PLAYING" | "PAUSED" | "LOSER" | "WINNER"> "PLAYING"
+gameStopped := => gameState() is not "PLAYING"
 togglePause := =>
   setGameState do
     if gameState() is "PLAYING"
@@ -39,6 +43,20 @@ togglePause := =>
     else if gameState() is "PAUSED"
       "PLAYING" 
     else gameState()
+// brick state
+initalBrickCount := 50
+brickBorder := 4
+brickSpacing := 75
+brickWidth := 100
+brickHeight := 40
+maxBricksPerRow := Math.floor((window.innerWidth - brickSpacing * 2) / brickWidth)
+getInitialBricks := => ((Array.from { length: initalBrickCount }).map ((_, i) => ({
+  health: createSignal (Math.floor(Math.random() * 4))
+  id: i
+})))
+[bricks, setBricks] := createSignal getInitialBricks()
+[bricksLeft, setBricksLeft] := createSignal(bricks().filter(({ health: [health] }) => !!health()).length)
+
 resetGame := =>
   setTimeout (=>
     setGameState "PLAYING"
@@ -49,9 +67,11 @@ resetGame := =>
     setBallVelocityX 0
     setPaddleCenter window.innerWidth / 2
     setScore 0
+    setBricks getInitialBricks()
+    setBricksLeft bricks().filter(({ health: [health] }) => !!health()).length
   ), 0
 pauseOrReset := =>
-  if gameState() is "LOSER"
+  if gameState() is "LOSER" or gameState() is "WINNER"
     resetGame()
   else
     togglePause()
@@ -60,29 +80,101 @@ isMakingContact := =>
   ballX() > paddleCenter() - paddleRadius and ballX() < paddleCenter() + paddleRadius
 
 launch := =>
-  setBallAttached(false)
+  setBallAttached false
   setBallVelocityX(1 + totalBallVelocity() * (ballX() - paddleCenter()) / paddleRadius)
   setBallVelocityY(-1 + (-totalBallVelocity() + Math.abs(ballVelocityX())))
 
 App: Component := =>
+
+  <For each=bricks()>
+    ({ id, health: [health] }) =>
+      <Brick {id} {health()}>
   <Ball>
   <Player>
   <GameStatus>
   <GithubLink>
+
+getTopOfBrick := (id: number) =>
+  brickHeight * Math.floor(id / maxBricksPerRow)
+getBottomOfBrick := (id: number) =>
+  getTopOfBrick(id) + brickHeight
+getLeftOfBrick := (id: number) =>
+  id % maxBricksPerRow * brickWidth
+getRightOfBrick := (id: number) =>
+  getLeftOfBrick(id) + brickWidth
+
+Brick: Component<{ id: number; health: number; }> := (props) =>
+  y := getTopOfBrick props.id
+  x := getLeftOfBrick props.id
+  <div style={do
+    display := if props.health is 0 then "none" else "flex"
+    borderPattern := if props.health > 1 then "solid" else "dotted"
+    {
+      position: "fixed"
+      top: `${brickSpacing}px`
+      left: `${brickSpacing}px`
+      transform: `translateX(${x}px) translateY(${y}px)`
+      width: `${brickWidth - brickBorder * 2}px`
+      height: `${brickHeight - brickBorder * 2}px`
+      border: `${brickBorder}px ${borderPattern} white`
+      display
+      "justify-content": "center"
+      "align-items": "center"
+      color: "white"
+      "font-size": "30px"
+      background: "black"
+      "z-index": 3
+    }
+  }>{props.health}
 
 Ball: Component := =>
   lastFrameTime .= new Date().getTime()
   onFrame (=>
     now := new Date().getTime()
     duration := (now - lastFrameTime) / 1000
+    
     lastFrameTime = now
     if ballAttached() or gameStopped() return
     nextY := ballY() + ballVelocityY() * duration
+    nextX := ballX() + ballVelocityX() * duration
+
+    contact := bricks().some (({ id, health: [health, setHealth] }) =>
+      brick := {
+        top: getTopOfBrick(id) + brickSpacing
+        bottom: getBottomOfBrick(id) + brickSpacing
+        left: getLeftOfBrick(id) + brickSpacing
+        right: getRightOfBrick(id) + brickSpacing
+      }
+      contact := health() is not 0 
+        and nextY > brick.top
+        and nextY < brick.bottom
+        and nextX > brick.left
+        and nextX < brick.right
+      if (contact)
+        setHealth health() - 1
+        if (health() is 0)
+          setBricksLeft bricksLeft() - 1
+          if (bricksLeft() is 0)
+            setGameState "WINNER"
+            return
+        setScore score() + 1
+        stillInContact := nextY > brick.top
+          and nextY < brick.bottom
+          and ballX() > brick.left
+          and ballX() < brick.right
+        if stillInContact
+          setBallVelocityY -ballVelocityY()
+        else
+          setBallVelocityX -ballVelocityX()
+      contact
+    )
+
+    if contact return
+
     if nextY < ballRadius
       setBallVelocityY -ballVelocityY()
       setBallY ballRadius
     else if nextY > window.innerHeight - paddleHeight - ballRadius and isMakingContact()
-      setScore score() + 1
       launch()
     else if nextY > window.innerHeight - ballRadius
       setBallY window.innerHeight - ballRadius
@@ -90,7 +182,6 @@ Ball: Component := =>
     else
       setBallY nextY
 
-    nextX := ballX() + ballVelocityX() * duration
     if nextX > window.innerWidth - ballRadius
       setBallVelocityX -ballVelocityX()
       setBallX window.innerWidth - ballRadius
@@ -101,6 +192,8 @@ Ball: Component := =>
       setBallX nextX
     return
   )
+
+  docEvent "click", (=> if isMakingContact() and ballAttached() then launch())
 
   <div style={
     height: `${ballWidth}px`
@@ -115,7 +208,7 @@ Ball: Component := =>
     transform: `translateY(calc(${ballY()}px - 50%)) translateX(calc(${ballX()}px - 50%))`
   }>
     <div style={do
-      trailSize := if ballAttached() then 0 else ballWidth * (1 + ((score() + 2) * .1))
+      trailSize := if ballAttached() then 0 else ballWidth * 2
       {
         background: "linear-gradient(270deg, white, transparent)"
         position: "absolute"
@@ -153,8 +246,6 @@ Player := =>
   docEvent "mousemove", (({ clientX }) => 
     movePlayer clientX
   )
-
-  docEvent "click", (=> if isMakingContact() and ballAttached() then launch())
 
   <div style={
     height: `${paddleHeight}px`
@@ -201,7 +292,7 @@ GameStatus := =>
     }
     onClick=pauseOrReset>
     <svg width="50" height="50">
-      <Show when={gameState() is "LOSER" or gameState() is "PAUSED"}>
+      <Show when={gameState() is not "PLAYING"}>
         <polygon points="5,0 45,25 5,50" fill="white" />
       <Show when={gameState() is "PLAYING"}>
         <rect x="0" y="0" width="20" height="50" fill="white" />
