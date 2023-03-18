@@ -16,14 +16,14 @@ onFrame := (callback: () => (boolean | void)) =>
   requestAnimationFrame onFrame
 
 // player state
-paddleHeight := 20
-paddleWidth := 100
+paddleHeight := window.innerHeight / 100
+paddleWidth := window.innerWidth / 10
 paddleRadius := paddleWidth / 2
 minPaddleCenter := paddleRadius
 maxPaddleCenter := => window.innerWidth - paddleRadius
 [paddleCenter, setPaddleCenter] := createSignal window.innerWidth / 2
 // ball state
-ballWidth := 20
+ballWidth := paddleHeight * 2
 ballRadius := ballWidth / 2
 initialVelocity := => (Math.max window.innerHeight, window.innerWidth) / 2
 totalBallVelocity := initialVelocity
@@ -46,10 +46,12 @@ togglePause := =>
 // brick state
 initalBrickCount := 50
 brickBorder := 4
-brickSpacing := 75
-brickWidth := 100
-brickHeight := 40
-maxBricksPerRow := Math.floor((window.innerWidth - brickSpacing * 2) / brickWidth)
+brickLeftSpacing := 50
+brickTop := 75
+brickWidth := window.innerWidth / 5
+brickLeft := (window.innerWidth - brickLeftSpacing * 2) % brickWidth / 2 + brickLeftSpacing
+brickHeight := window.innerHeight / 25
+maxBricksPerRow := Math.floor((window.innerWidth - brickLeftSpacing * 2) / brickWidth)
 getInitialBricks := => ((Array.from { length: initalBrickCount }).map ((_, i) => ({
   health: createSignal (Math.floor(Math.random() * 4))
   id: i
@@ -76,7 +78,7 @@ pauseOrReset := =>
   else
     togglePause()
 
-isMakingContact := =>
+isMakingContactWithPaddle := =>
   ballX() > paddleCenter() - paddleRadius and ballX() < paddleCenter() + paddleRadius
 
 launch := =>
@@ -111,8 +113,8 @@ Brick: Component<{ id: number; health: number; }> := (props) =>
     borderPattern := if props.health > 1 then "solid" else "dotted"
     {
       position: "fixed"
-      top: `${brickSpacing}px`
-      left: `${brickSpacing}px`
+      top: `${brickTop}px`
+      left: `${brickLeft}px`
       transform: `translateX(${x}px) translateY(${y}px)`
       width: `${brickWidth - brickBorder * 2}px`
       height: `${brickHeight - brickBorder * 2}px`
@@ -121,7 +123,7 @@ Brick: Component<{ id: number; health: number; }> := (props) =>
       "justify-content": "center"
       "align-items": "center"
       color: "white"
-      "font-size": "30px"
+      "font-size": "${brickHeight / 2}px"
       background: "black"
       "z-index": 3
     }
@@ -140,28 +142,28 @@ Ball: Component := =>
 
     contact := bricks().some (({ id, health: [health, setHealth] }) =>
       brick := {
-        top: getTopOfBrick(id) + brickSpacing
-        bottom: getBottomOfBrick(id) + brickSpacing
-        left: getLeftOfBrick(id) + brickSpacing
-        right: getRightOfBrick(id) + brickSpacing
+        top: getTopOfBrick(id) + brickTop
+        bottom: getBottomOfBrick(id) + brickTop
+        left: getLeftOfBrick(id) + brickLeft
+        right: getRightOfBrick(id) + brickLeft
       }
       contact := health() is not 0 
-        and nextY > brick.top
-        and nextY < brick.bottom
-        and nextX > brick.left
-        and nextX < brick.right
+        and nextY + ballRadius > brick.top
+        and nextY - ballRadius < brick.bottom
+        and nextX + ballRadius > brick.left
+        and nextX - ballRadius < brick.right
       if (contact)
+        setScore score() + 1
         setHealth health() - 1
         if (health() is 0)
           setBricksLeft bricksLeft() - 1
           if (bricksLeft() is 0)
             setGameState "WINNER"
             return
-        setScore score() + 1
-        stillInContact := nextY > brick.top
-          and nextY < brick.bottom
-          and ballX() > brick.left
-          and ballX() < brick.right
+        stillInContact := nextY + ballRadius > brick.top
+          and nextY - ballRadius < brick.bottom
+          and ballX() + ballRadius > brick.left
+          and ballX() - ballRadius < brick.right
         if stillInContact
           setBallVelocityY -ballVelocityY()
         else
@@ -174,7 +176,7 @@ Ball: Component := =>
     if nextY < ballRadius
       setBallVelocityY -ballVelocityY()
       setBallY ballRadius
-    else if nextY > window.innerHeight - paddleHeight - ballRadius and isMakingContact()
+    else if nextY > window.innerHeight - paddleHeight - ballRadius and isMakingContactWithPaddle()
       launch()
     else if nextY > window.innerHeight - ballRadius
       setBallY window.innerHeight - ballRadius
@@ -193,7 +195,7 @@ Ball: Component := =>
     return
   )
 
-  docEvent "click", (=> if isMakingContact() and ballAttached() then launch())
+  docEvent "click", (=> if isMakingContactWithPaddle() and ballAttached() then launch())
 
   <div style={
     height: `${ballWidth}px`
@@ -281,6 +283,7 @@ GameStatus := =>
       "font-size": "min(20vh, 20vw)"
       "text-shadow": "0 0 10px black"
       "user-select": "none"
+      "z-index": 5
     }>{gameState()}
   <button 
     style={
