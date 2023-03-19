@@ -3,12 +3,13 @@
 
 initalBrickCount := 50
 brickBorder := 3
-brickLeftSpacing := => screenState.gameContainerSize() / 6
+maxBricksPerRow := => 5
+brickLeftSpacing := => screenState.gameContainerSize() / (maxBricksPerRow() + 2)
 brickTop := => screenState.gameContainerSize() / 20
 brickWidth := => brickLeftSpacing()
-brickLeft := => (screenState.gameContainerSize() - brickLeftSpacing() * 2) % brickWidth() / 2 + brickLeftSpacing()
+brickLeft := => brickLeftSpacing()
 brickHeight := => brickTop()
-maxBricksPerRow := => Math.floor((screenState.gameContainerSize() - brickLeftSpacing() * 2) / brickWidth())
+
 getInitialBricks := => ((Array.from { length: initalBrickCount }).map ((_, i) => ({
   health: createSignal (Math.floor(Math.random() * 4))
   id: i
