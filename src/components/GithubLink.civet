@@ -1,0 +1,12 @@
+{ type Component } from "solid-js"
+
+export GithubLink: Component := =>
+  <a href="https://github.com/EthanStandel/brick-breaker"
+    style={
+      position: "fixed"
+      bottom: "25px"
+      right: "25px"
+    }
+    target="_blank"
+    rel="noopener noreferrer">
+    <img width="50" height="50" src="/github.svg">

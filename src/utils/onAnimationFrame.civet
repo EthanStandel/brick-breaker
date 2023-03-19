@@ -1,0 +1,6 @@
+export onAnimationFrame := (callback: () => (boolean | void)) =>
+  onFrame := =>
+    cancel := callback()
+    if !cancel
+      requestAnimationFrame onFrame
+  requestAnimationFrame onFrame

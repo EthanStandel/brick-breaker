@@ -1,0 +1,19 @@
+{ type Component, createSignal, Show, onCleanup, For, createEffect, untrack } from "solid-js"
+{ brickState } from "./state/brickState.civet"
+{ ballState } from "./state/ballState.civet"
+{ Brick } from "./components/Brick.civet"
+{ Player } from "./components/Player.civet"
+{ GameStatus } from "./components/GameStatus.civet"
+{ Ball } from "./components/Ball.civet"
+{ GithubLink } from "./components/GithubLink.civet"
+
+export Game: Component := =>
+  <For each=brickState.bricks()>
+    ({ id, health: [health] }) =>
+      <Brick {id} {health()}>
+  <For each=ballState.balls()>
+    () =>
+      <Ball>
+  <Player>
+  <GameStatus>
+  <GithubLink>

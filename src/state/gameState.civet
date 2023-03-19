@@ -1,0 +1,40 @@
+{ createSignal } from "solid-js"
+{ ballState } from "./ballState.civet"
+{ playerState } from "./playerState.civet"
+{ brickState } from "./brickState.civet"
+
+[score, setScore] := createSignal 0
+[gameStatus, setGameStatus] := createSignal<"PLAYING" | "PAUSED" | "LOSER" | "WINNER"> "PLAYING"
+gameStopped := => gameStatus() is not "PLAYING"
+togglePause := =>
+  setGameStatus do
+    if gameStatus() is "PLAYING"
+      "PAUSED" 
+    else if gameStatus() is "PAUSED"
+      "PLAYING" 
+    else gameStatus()
+
+reset := =>
+  setTimeout (=>
+    setGameStatus "PLAYING"
+    setScore 0
+    ballState.reset()
+    playerState.reset()
+    brickState.reset()
+  ), 0
+pauseOrReset := =>
+  if gameStatus() is "LOSER" or gameStatus() is "WINNER"
+    reset()
+  else
+    togglePause()
+
+export gameState := {
+  score
+  setScore
+  gameStatus
+  setGameStatus
+  gameStopped
+  togglePause
+  pauseOrReset
+  reset
+}

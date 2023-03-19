@@ -2,7 +2,7 @@
 import { render } from "solid-js/web";
 
 import "./index.css";
-import App from "./App.civet";
+import { Game } from "./Game.civet";
 
 const root = document.getElementById("root");
 
@@ -12,4 +12,4 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   );
 }
 
-render(() => <App />, root!);
+render(() => <Game />, root!);

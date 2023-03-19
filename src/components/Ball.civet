@@ -1,0 +1,135 @@
+{ Component, createSignal, createEffect, untrack, onCleanup } from "solid-js"
+{ ballState } from "../state/ballState.civet"
+{ playerState } from "../state/playerState.civet"
+{ gameState } from "../state/gameState.civet"
+{ brickState } from "../state/brickState.civet"
+{ onAnimationFrame } from "../utils/onAnimationFrame.civet"
+{ globalEvent } from "../utils/globalEvent.civet"
+
+
+export Ball: Component := =>
+  totalBallVelocity := ballState.initialVelocity
+  [ballAttached, setBallAttached] := createSignal true
+  [ballY, setBallY] := createSignal window.innerHeight - playerState.paddleHeight - ballState.ballRadius
+  [ballX, setBallX] := createSignal window.innerWidth / 2
+  [ballVelocityY, setBallVelocityY] := createSignal 0
+  [ballVelocityX, setBallVelocityX] := createSignal 0
+  [ballDead, setBallDead] := createSignal false
+  onCleanup (=> setBallDead true)
+  createEffect(=>
+    if ballDead()
+      ballState.setLivingBalls untrack(ballState.livingBalls) - 1
+      if untrack(ballState.livingBalls) is 0
+        gameState.setGameStatus "LOSER"
+  )
+
+  launch := =>
+    setBallAttached false
+    setBallVelocityX(
+      1 + totalBallVelocity() * (ballX() - playerState.paddleCenter()) / playerState.paddleRadius
+    )
+    setBallVelocityY(-1 + (-totalBallVelocity() + Math.abs(ballVelocityX())))
+
+  isMakingContactWithPlayer := =>
+    ballX() > playerState.paddleCenter() - playerState.paddleRadius 
+    and ballX() < playerState.paddleCenter() + playerState.paddleRadius
+
+  lastFrameTime .= new Date().getTime()
+  onAnimationFrame (=>
+    now := new Date().getTime()
+    duration := (now - lastFrameTime) / 1000
+    
+    lastFrameTime = now
+    if ballAttached() or gameState.gameStopped() return
+    nextY := ballY() + ballVelocityY() * duration
+    nextX := ballX() + ballVelocityX() * duration
+
+    contact := brickState.bricks().some (({ id, health: [health, setHealth] }) =>
+      brick := brickState.getBrickDimensions id
+      contact := health() is not 0 
+        and nextY + ballState.ballRadius > brick.top
+        and nextY - ballState.ballRadius < brick.bottom
+        and nextX + ballState.ballRadius > brick.left
+        and nextX - ballState.ballRadius < brick.right
+      if (contact)
+        gameState.setScore gameState.score() + 1
+        setHealth health() - 1
+        if (health() is 0)
+          if (brickState.bricksLeft() is 0)
+            gameState.setGameStatus "WINNER"
+            return
+        stillInContact := nextY + ballState.ballRadius > brick.top
+          and nextY - ballState.ballRadius < brick.bottom
+          and ballX() + ballState.ballRadius > brick.left
+          and ballX() - ballState.ballRadius < brick.right
+        if stillInContact
+          setBallVelocityY -ballVelocityY()
+        else
+          setBallVelocityX -ballVelocityX()
+      contact
+    )
+
+    if contact return
+
+    if nextY < ballState.ballRadius
+      setBallVelocityY -ballVelocityY()
+      setBallY ballState.ballRadius
+    else if nextY > window.innerHeight - playerState.paddleHeight - ballState.ballRadius and isMakingContactWithPlayer()
+      launch()
+    else if nextY > window.innerHeight - ballState.ballRadius
+      setBallY window.innerHeight - ballState.ballRadius
+      setBallDead true
+    else
+      setBallY nextY
+
+    if nextX > window.innerWidth - ballState.ballRadius
+      setBallVelocityX -ballVelocityX()
+      setBallX window.innerWidth - ballState.ballRadius
+    else if nextX < ballState.ballRadius
+      setBallVelocityX -ballVelocityX()
+      setBallX ballState.ballRadius
+    else
+      setBallX nextX
+    
+    ballDead()
+  )
+
+  globalEvent "click", (=> if isMakingContactWithPlayer() and ballAttached() then launch())
+
+  <div style={
+    transition: "opacity 0.25s"
+    opacity: if ballDead() and !gameState.gameStopped() then 0 else 1
+    height: `${ballState.ballWidth}px`
+    width: `${ballState.ballWidth}px`
+    background: "white"
+    "border-radius": "50%"
+    top: 0
+    left: 0
+    position: "fixed"
+    "will-change": "transform"
+    "box-shadow": `${-ballVelocityX() / 100}px ${-ballVelocityY() / 100}px 20px -20px white`
+    transform: `translateY(calc(${ballY()}px - 50%)) translateX(calc(${ballX()}px - 50%))`
+  }>
+    <div style={do
+      trailSize := if ballAttached() then 0 else ballState.ballWidth * 2
+      {
+        background: "linear-gradient(270deg, white, transparent)"
+        position: "absolute"
+        top: "50%"
+        left: "50%"
+        transform: do
+          radians := Math.atan2(ballVelocityY(), ballVelocityX())
+          trail := trailSize / 2 - ballState.ballWidth / 2
+          ```
+            translate(
+              calc(-50% + ${trail * -Math.cos(radians)}px),
+              calc(-50% + ${trail * -Math.sin(radians)}px)
+            )
+            rotate(${radians}rad)
+          ```
+        height: `${ballState.ballWidth}px`
+        width: `${trailSize}px`
+        "border-radius": `${ballState.ballRadius}px`
+        "z-index": -1
+      }
+    }>

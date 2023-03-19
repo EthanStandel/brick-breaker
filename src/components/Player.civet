@@ -1,0 +1,32 @@
+{ Component } from "solid-js"
+{ globalEvent } from "../utils/globalEvent.civet"
+{ gameState } from "../state/gameState.civet"
+{ playerState } from "../state/playerState.civet"
+
+export Player: Component := => 
+  movePlayer := (x: number) =>
+    if gameState.gameStopped() return
+    playerState.setPaddleCenter do
+      if x < playerState.minPaddleCenter then playerState.minPaddleCenter
+      else if x > playerState.maxPaddleCenter() then playerState.maxPaddleCenter()
+      else x
+
+  globalEvent "touchmove", (({ touches }) => 
+    movePlayer touches[0].clientX
+  )
+
+  globalEvent "mousemove", (({ clientX }) => 
+    movePlayer clientX
+  )
+
+  <div style={
+    height: `${playerState.paddleHeight}px`
+    width: `${playerState.paddleWidth}px`
+    background: "white"
+    position: "fixed"
+    left: 0
+    bottom: 0
+    "pointer-events": "none"
+    "will-change": "transform"
+    transform: `translateX(calc(${playerState.paddleCenter()}px - 50%))`
+  }>

@@ -1,0 +1,26 @@
+{ Component } from "solid-js"
+{ brickState } from "../state/brickState.civet"
+
+export Brick: Component<{ id: number; health: number; }> := (props) =>
+  y := brickState.getTopOfBrick props.id
+  x := brickState.getLeftOfBrick props.id
+  <div style={do
+    display := if props.health is 0 then "none" else "flex"
+    borderPattern := if props.health > 1 then "solid" else "dotted"
+    {
+      position: "fixed"
+      top: `${brickState.brickTop}px`
+      left: `${brickState.brickLeft}px`
+      transform: `translateX(${x}px) translateY(${y}px)`
+      width: `${brickState.brickWidth - brickState.brickBorder * 2}px`
+      height: `${brickState.brickHeight - brickState.brickBorder * 2}px`
+      border: `${brickState.brickBorder}px ${borderPattern} white`
+      display
+      "justify-content": "center"
+      "align-items": "center"
+      color: "white"
+      "font-size": "${brickHeight / 2}px"
+      background: "black"
+      "z-index": 3
+    }
+  }>{props.health}
