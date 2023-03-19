@@ -1,6 +1,6 @@
 { createSignal } from "solid-js"
 
-initalBrickCount := 50
+initalBrickCount := 30
 brickBorder := 4
 brickLeftSpacing := 50
 brickTop := 75

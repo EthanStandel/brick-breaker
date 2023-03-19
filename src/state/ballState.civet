@@ -1,6 +1,5 @@
 { createSignal } from "solid-js"
 { playerState } from "./playerState.civet"
-{ brickState } from "./brickState.civet"
 
 ballWidth := playerState.paddleHeight * 2
 ballRadius := ballWidth / 2
@@ -10,7 +9,6 @@ initialVelocity := => (Math.max window.innerHeight, window.innerWidth) / 2
 addABall := =>
   setBalls [...balls(), { index: balls()[balls().length - 1].index + 1 }] 
   setLivingBalls livingBalls() + 1
-  brickState.setBricksLeft brickState.bricksLeft() - 1
 
 export ballState := {
   ballWidth

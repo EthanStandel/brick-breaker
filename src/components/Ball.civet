@@ -38,7 +38,7 @@ export Ball: Component := =>
   onAnimationFrame (=>
     now := new Date().getTime()
     duration := (now - lastFrameTime) / 1000
-    
+  
     lastFrameTime = now
     if ballAttached() or gameState.gameStopped() return
     nextY := ballY() + ballVelocityY() * duration
@@ -55,7 +55,9 @@ export Ball: Component := =>
         gameState.setScore gameState.score() + 1
         setHealth health() - 1
         if (health() is 0)
+          brickState.setBricksLeft brickState.bricksLeft() - 1
           if (brickState.bricksLeft() is 0)
+            setBallDead true
             gameState.setGameStatus "WINNER"
             return
         stillInContact := nextY + ballState.ballRadius > brick.top

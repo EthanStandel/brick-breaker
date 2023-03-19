@@ -16,12 +16,14 @@ togglePause := =>
 
 reset := =>
   setTimeout (=>
-    setGameStatus "PLAYING"
-    setScore 0
     ballState.reset()
+    if gameStatus() is "LOSER"
+      setScore 0
+    setGameStatus "PLAYING"
     playerState.reset()
     brickState.reset()
   ), 0
+
 pauseOrReset := =>
   if gameStatus() is "LOSER" or gameStatus() is "WINNER"
     reset()
