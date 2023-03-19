@@ -4,8 +4,8 @@
 paddleHeight := => screenState.gameContainerSize() / 100
 paddleWidth := => screenState.gameContainerSize() / 5
 paddleRadius := => paddleWidth() / 2
-minPaddleCenter := => paddleRadius() + screenState.gameLeft()
-maxPaddleCenter := => screenState.gameRight() - paddleRadius()
+minPaddleCenter := => playerState.paddleRadius()
+maxPaddleCenter := => screenState.gameContainerSize() - paddleRadius()
 [paddleCenter, setPaddleCenter] := createSignal window.innerWidth / 2
 
 export playerState := {

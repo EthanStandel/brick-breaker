@@ -5,10 +5,11 @@
 { screenState } from "../state/screenState.civet"
 
 export Player: Component := => 
-  movePlayer := (x: number) =>
+  movePlayer := (xIn: number) =>
+    x := xIn - screenState.gameLeft()
     if gameState.gameStopped() return
     playerState.setPaddleCenter do
-      if x < playerState.minPaddleCenter() then playerState.minPaddleCenter()
+      if x < playerState.paddleRadius() then playerState.paddleRadius()
       else if x > playerState.maxPaddleCenter() then playerState.maxPaddleCenter()
       else x
 
