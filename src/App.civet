@@ -1,4 +1,4 @@
-{ type Component, createSignal, Show, onCleanup, For } from "solid-js"
+{ type Component, createSignal, Show, onCleanup, For, createEffect, untrack } from "solid-js"
 
 // utils
 docEvent := <K extends keyof DocumentEventMap>(
@@ -26,12 +26,12 @@ maxPaddleCenter := => window.innerWidth - paddleRadius
 ballWidth := paddleHeight * 2
 ballRadius := ballWidth / 2
 initialVelocity := => (Math.max window.innerHeight, window.innerWidth) / 2
-totalBallVelocity := initialVelocity
-[ballAttached, setBallAttached] := createSignal true
-[ballY, setBallY] := createSignal window.innerHeight - paddleHeight - ballRadius
-[ballX, setBallX] := createSignal window.innerWidth / 2
-[ballVelocityY, setBallVelocityY] := createSignal 0
-[ballVelocityX, setBallVelocityX] := createSignal 0
+[balls, setBalls] := createSignal [{ index: 0 }]
+[livingBalls, setLivingBalls] := createSignal balls().length
+addABall := =>
+  setBalls [...balls(), { index: balls()[balls().length - 1].index + 1 }] 
+  setLivingBalls livingBalls() + 1
+  setBricksLeft bricksLeft() - 1
 // game state
 [score, setScore] := createSignal 0
 [gameState, setGameState] := createSignal<"PLAYING" | "PAUSED" | "LOSER" | "WINNER"> "PLAYING"
@@ -62,11 +62,8 @@ getInitialBricks := => ((Array.from { length: initalBrickCount }).map ((_, i) =>
 resetGame := =>
   setTimeout (=>
     setGameState "PLAYING"
-    setBallAttached true
-    setBallY window.innerHeight - paddleHeight - ballRadius
-    setBallX window.innerWidth / 2
-    setBallVelocityY 0
-    setBallVelocityX 0
+    setBalls [{ index: 0 }]
+    setLivingBalls balls().length
     setPaddleCenter window.innerWidth / 2
     setScore 0
     setBricks getInitialBricks()
@@ -78,20 +75,11 @@ pauseOrReset := =>
   else
     togglePause()
 
-isMakingContactWithPaddle := =>
-  ballX() > paddleCenter() - paddleRadius and ballX() < paddleCenter() + paddleRadius
-
-launch := =>
-  setBallAttached false
-  setBallVelocityX(1 + totalBallVelocity() * (ballX() - paddleCenter()) / paddleRadius)
-  setBallVelocityY(-1 + (-totalBallVelocity() + Math.abs(ballVelocityX())))
-
 App: Component := =>
-
   <For each=bricks()>
     ({ id, health: [health] }) =>
       <Brick {id} {health()}>
-  <Ball>
+  <For each=balls()>{=> <Ball>}
   <Player>
   <GameStatus>
   <GithubLink>
@@ -130,6 +118,29 @@ Brick: Component<{ id: number; health: number; }> := (props) =>
   }>{props.health}
 
 Ball: Component := =>
+  totalBallVelocity := initialVelocity
+  [ballAttached, setBallAttached] := createSignal true
+  [ballY, setBallY] := createSignal window.innerHeight - paddleHeight - ballRadius
+  [ballX, setBallX] := createSignal window.innerWidth / 2
+  [ballVelocityY, setBallVelocityY] := createSignal 0
+  [ballVelocityX, setBallVelocityX] := createSignal 0
+  [ballDead, setBallDead] := createSignal false
+  onCleanup (=> setBallDead true)
+  createEffect(=>
+    if ballDead()
+      setLivingBalls untrack(livingBalls) - 1
+      if untrack(livingBalls) is 0
+        setGameState "LOSER"
+  )
+
+  launch := =>
+    setBallAttached false
+    setBallVelocityX(1 + totalBallVelocity() * (ballX() - paddleCenter()) / paddleRadius)
+    setBallVelocityY(-1 + (-totalBallVelocity() + Math.abs(ballVelocityX())))
+
+  isMakingContactWithPlayer := =>
+    ballX() > paddleCenter() - paddleRadius and ballX() < paddleCenter() + paddleRadius
+
   lastFrameTime .= new Date().getTime()
   onFrame (=>
     now := new Date().getTime()
@@ -156,7 +167,6 @@ Ball: Component := =>
         setScore score() + 1
         setHealth health() - 1
         if (health() is 0)
-          setBricksLeft bricksLeft() - 1
           if (bricksLeft() is 0)
             setGameState "WINNER"
             return
@@ -176,11 +186,11 @@ Ball: Component := =>
     if nextY < ballRadius
       setBallVelocityY -ballVelocityY()
       setBallY ballRadius
-    else if nextY > window.innerHeight - paddleHeight - ballRadius and isMakingContactWithPaddle()
+    else if nextY > window.innerHeight - paddleHeight - ballRadius and isMakingContactWithPlayer()
       launch()
     else if nextY > window.innerHeight - ballRadius
       setBallY window.innerHeight - ballRadius
-      setGameState "LOSER"
+      setBallDead true
     else
       setBallY nextY
 
@@ -192,12 +202,15 @@ Ball: Component := =>
       setBallX ballRadius
     else
       setBallX nextX
-    return
+    
+    ballDead()
   )
 
-  docEvent "click", (=> if isMakingContactWithPaddle() and ballAttached() then launch())
+  docEvent "click", (=> if isMakingContactWithPlayer() and ballAttached() then launch())
 
   <div style={
+    transition: "opacity 0.25s"
+    opacity: if ballDead() and !gameStopped() then 0 else 1
     height: `${ballWidth}px`
     width: `${ballWidth}px`
     background: "white"
@@ -233,7 +246,7 @@ Ball: Component := =>
       }
     }>
 
-Player := => 
+Player: Component := => 
   movePlayer := (x: number) =>
     if gameStopped() return
     setPaddleCenter do
