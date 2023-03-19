@@ -1,5 +1,6 @@
 { createSignal } from "solid-js"
 { screenState } from "./screenState.civet"
+{ memo } from "../utils/memo.civet"
 
 initalBrickCount := 50
 brickBorder := 3
@@ -26,12 +27,12 @@ getLeftOfBrick := (id: number) =>
 getRightOfBrick := (id: number) =>
   getLeftOfBrick(id) + brickWidth()
 
-getBrickDimensions := (id: number) => ({
+getBrickDimensions := memo((id: number) => ({
   top: getTopOfBrick(id) + brickTop()
   bottom: getBottomOfBrick(id) + brickTop()
   left: getLeftOfBrick(id) + brickLeft()
   right: getRightOfBrick(id) + brickLeft()
-})
+}))
 
 export brickState := {
   bricks
