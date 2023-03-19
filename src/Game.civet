@@ -16,6 +16,7 @@ export Game: Component := =>
     height: `${screenState.gameContainerSize() - 2}px`
     width: `${screenState.gameContainerSize() - 2}px`
     border: "1px solid white"
+    overflow: "hidden"
   }>
     <For each=brickState.bricks()>
       ({ id, health: [health] }) =>

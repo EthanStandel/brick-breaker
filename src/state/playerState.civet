@@ -2,7 +2,7 @@
 { screenState } from "./screenState.civet"
 
 paddleHeight := => screenState.gameContainerSize() / 100
-paddleWidth := => screenState.gameContainerSize() / 10
+paddleWidth := => screenState.gameContainerSize() / 5
 paddleRadius := => paddleWidth() / 2
 minPaddleCenter := => paddleRadius() + screenState.gameLeft()
 maxPaddleCenter := => screenState.gameRight() - paddleRadius()

@@ -5,13 +5,14 @@
 { brickState } from "../state/brickState.civet"
 { onAnimationFrame } from "../utils/onAnimationFrame.civet"
 { globalEvent } from "../utils/globalEvent.civet"
+{ screenState } from "../state/screenState.civet"
 
 
 export Ball: Component := =>
   totalBallVelocity := ballState.initialVelocity
   [ballAttached, setBallAttached] := createSignal true
-  [ballY, setBallY] := createSignal window.innerHeight - playerState.paddleHeight() - ballState.ballRadius
-  [ballX, setBallX] := createSignal window.innerWidth / 2
+  [ballY, setBallY] := createSignal screenState.gameContainerSize() - playerState.paddleHeight() - ballState.ballRadius
+  [ballX, setBallX] := createSignal screenState.gameContainerSize() / 2
   [ballVelocityY, setBallVelocityY] := createSignal 0
   [ballVelocityX, setBallVelocityX] := createSignal 0
   [ballDead, setBallDead] := createSignal false
@@ -76,17 +77,17 @@ export Ball: Component := =>
     if nextY < ballState.ballRadius
       setBallVelocityY -ballVelocityY()
       setBallY ballState.ballRadius
-    else if nextY > window.innerHeight - playerState.paddleHeight() - ballState.ballRadius and isMakingContactWithPlayer()
+    else if nextY > screenState.gameContainerSize() - playerState.paddleHeight() - ballState.ballRadius and isMakingContactWithPlayer()
       launch()
-    else if nextY > window.innerHeight - ballState.ballRadius
-      setBallY window.innerHeight - ballState.ballRadius
+    else if nextY > screenState.gameContainerSize() - ballState.ballRadius
+      setBallY screenState.gameContainerSize() - ballState.ballRadius
       setBallDead true
     else
       setBallY nextY
 
-    if nextX > window.innerWidth - ballState.ballRadius
+    if nextX > screenState.gameContainerSize() - ballState.ballRadius
       setBallVelocityX -ballVelocityX()
-      setBallX window.innerWidth - ballState.ballRadius
+      setBallX screenState.gameContainerSize() - ballState.ballRadius
     else if nextX < ballState.ballRadius
       setBallVelocityX -ballVelocityX()
       setBallX ballState.ballRadius
@@ -105,9 +106,9 @@ export Ball: Component := =>
     width: `${ballState.ballWidth}px`
     background: "white"
     "border-radius": "50%"
-    top: 0
-    left: 0
-    position: "fixed"
+    top: "0px"
+    left: "0px"
+    position: "absolute"
     "will-change": "transform"
     "box-shadow": `${-ballVelocityX() / 100}px ${-ballVelocityY() / 100}px 20px -20px white`
     transform: `translateY(calc(${ballY()}px - 50%)) translateX(calc(${ballX()}px - 50%))`

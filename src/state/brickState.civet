@@ -1,13 +1,14 @@
 { createSignal } from "solid-js"
+{ screenState } from "./screenState.civet"
 
 initalBrickCount := 50
-brickBorder := 4
-brickLeftSpacing := 50
-brickTop := 75
-brickWidth := window.innerWidth / 5
-brickLeft := (window.innerWidth - brickLeftSpacing * 2) % brickWidth / 2 + brickLeftSpacing
-brickHeight := window.innerHeight / 25
-maxBricksPerRow := Math.floor((window.innerWidth - brickLeftSpacing * 2) / brickWidth)
+brickBorder := 3
+brickLeftSpacing := => screenState.gameContainerSize() / 6
+brickTop := => screenState.gameContainerSize() / 20
+brickWidth := => brickLeftSpacing()
+brickLeft := => (screenState.gameContainerSize() - brickLeftSpacing() * 2) % brickWidth() / 2 + brickLeftSpacing()
+brickHeight := => brickTop()
+maxBricksPerRow := => Math.floor((screenState.gameContainerSize() - brickLeftSpacing() * 2) / brickWidth())
 getInitialBricks := => ((Array.from { length: initalBrickCount }).map ((_, i) => ({
   health: createSignal (Math.floor(Math.random() * 4))
   id: i
@@ -16,19 +17,19 @@ getInitialBricks := => ((Array.from { length: initalBrickCount }).map ((_, i) =>
 [bricksLeft, setBricksLeft] := createSignal(bricks().filter(({ health: [health] }) => !!health()).length)
 
 getTopOfBrick := (id: number) =>
-  brickHeight * Math.floor(id / maxBricksPerRow)
+  brickHeight() * Math.floor(id / maxBricksPerRow())
 getBottomOfBrick := (id: number) =>
-  getTopOfBrick(id) + brickHeight
+  getTopOfBrick(id) + brickHeight()
 getLeftOfBrick := (id: number) =>
-  id % maxBricksPerRow * brickWidth
+  id % maxBricksPerRow() * brickWidth()
 getRightOfBrick := (id: number) =>
-  getLeftOfBrick(id) + brickWidth
+  getLeftOfBrick(id) + brickWidth()
 
 getBrickDimensions := (id: number) => ({
-  top: getTopOfBrick(id) + brickTop
-  bottom: getBottomOfBrick(id) + brickTop
-  left: getLeftOfBrick(id) + brickLeft
-  right: getRightOfBrick(id) + brickLeft
+  top: getTopOfBrick(id) + brickTop()
+  bottom: getBottomOfBrick(id) + brickTop()
+  left: getLeftOfBrick(id) + brickLeft()
+  right: getRightOfBrick(id) + brickLeft()
 })
 
 export brickState := {
