@@ -6,14 +6,23 @@
 { GameStatus } from "./components/GameStatus.civet"
 { Ball } from "./components/Ball.civet"
 { GithubLink } from "./components/GithubLink.civet"
+{ screenState } from "./state/screenState.civet"
 
 export Game: Component := =>
-  <For each=brickState.bricks()>
-    ({ id, health: [health] }) =>
-      <Brick {id} {health()}>
-  <For each=ballState.balls()>
-    () =>
-      <Ball>
-  <Player>
-  <GameStatus>
-  <GithubLink>
+  <div #game style={
+    position: "fixed"
+    top: `${screenState.gameTop()}px`
+    left: `${screenState.gameLeft()}px`
+    height: `${screenState.gameContainerSize() - 2}px`
+    width: `${screenState.gameContainerSize() - 2}px`
+    border: "1px solid white"
+  }>
+    <For each=brickState.bricks()>
+      ({ id, health: [health] }) =>
+        <Brick {id} {health()}>
+    <For each=ballState.balls()>
+      () =>
+        <Ball>
+    <Player>
+    <GameStatus>
+    <GithubLink>

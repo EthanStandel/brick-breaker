@@ -1,0 +1,12 @@
+export memo := <
+  Args extends ReadonlyArray<unknown>,
+  Return,
+  Fn extends (...args: Args) => Return
+>(fn: Fn): Fn =>
+  const cachedRuns = new Map<string, Return>()
+  ((...args: Args) =>
+    key := args.join(",")
+    if !cachedRuns.has(key)
+      cachedRuns.set(key, fn(...args))
+    cachedRuns.get(key) as Return
+  ) as Fn

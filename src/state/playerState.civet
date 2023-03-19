@@ -1,10 +1,11 @@
 { createSignal } from "solid-js"
+{ screenState } from "./screenState.civet"
 
-paddleHeight := window.innerHeight / 100
-paddleWidth := window.innerWidth / 10
-paddleRadius := paddleWidth / 2
-minPaddleCenter := paddleRadius
-maxPaddleCenter := => window.innerWidth - paddleRadius
+paddleHeight := => screenState.gameContainerSize() / 100
+paddleWidth := => screenState.gameContainerSize() / 10
+paddleRadius := => paddleWidth() / 2
+minPaddleCenter := => paddleRadius() + screenState.gameLeft()
+maxPaddleCenter := => screenState.gameRight() - paddleRadius()
 [paddleCenter, setPaddleCenter] := createSignal window.innerWidth / 2
 
 export playerState := {

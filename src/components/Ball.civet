@@ -10,7 +10,7 @@
 export Ball: Component := =>
   totalBallVelocity := ballState.initialVelocity
   [ballAttached, setBallAttached] := createSignal true
-  [ballY, setBallY] := createSignal window.innerHeight - playerState.paddleHeight - ballState.ballRadius
+  [ballY, setBallY] := createSignal window.innerHeight - playerState.paddleHeight() - ballState.ballRadius
   [ballX, setBallX] := createSignal window.innerWidth / 2
   [ballVelocityY, setBallVelocityY] := createSignal 0
   [ballVelocityX, setBallVelocityX] := createSignal 0
@@ -26,13 +26,13 @@ export Ball: Component := =>
   launch := =>
     setBallAttached false
     setBallVelocityX(
-      1 + totalBallVelocity() * (ballX() - playerState.paddleCenter()) / playerState.paddleRadius
+      1 + totalBallVelocity() * (ballX() - playerState.paddleCenter()) / playerState.paddleRadius()
     )
     setBallVelocityY(-1 + (-totalBallVelocity() + Math.abs(ballVelocityX())))
 
   isMakingContactWithPlayer := =>
-    ballX() > playerState.paddleCenter() - playerState.paddleRadius 
-    and ballX() < playerState.paddleCenter() + playerState.paddleRadius
+    ballX() > playerState.paddleCenter() - playerState.paddleRadius()
+    and ballX() < playerState.paddleCenter() + playerState.paddleRadius()
 
   lastFrameTime .= new Date().getTime()
   onAnimationFrame (=>
@@ -76,7 +76,7 @@ export Ball: Component := =>
     if nextY < ballState.ballRadius
       setBallVelocityY -ballVelocityY()
       setBallY ballState.ballRadius
-    else if nextY > window.innerHeight - playerState.paddleHeight - ballState.ballRadius and isMakingContactWithPlayer()
+    else if nextY > window.innerHeight - playerState.paddleHeight() - ballState.ballRadius and isMakingContactWithPlayer()
       launch()
     else if nextY > window.innerHeight - ballState.ballRadius
       setBallY window.innerHeight - ballState.ballRadius

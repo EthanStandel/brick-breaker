@@ -1,0 +1,26 @@
+{ createSignal } from "solid-js"
+{ memo } from "../utils/memo.civet"
+
+const [gameContainerSize, setGameContainerSize] = createSignal(
+  Math.min(window.innerWidth, window.innerHeight)
+)
+gameTop := => (window.innerHeight - gameContainerSize()) / 2
+gameLeft := => (window.innerWidth - gameContainerSize()) / 2
+gameBottom := => window.innerHeight - gameTop()
+gameRight := => window.innerWidth - gameLeft()
+
+console.log gameContainerSize(), gameTop(), gameLeft(), gameBottom(), gameRight()
+
+window.addEventListener("resize", () => {
+  setGameContainerSize(Math.min(window.innerWidth, window.innerHeight))
+})
+getGameEl := memo(=> document.querySelector("#game")!)
+
+export screenState := {
+  gameContainerSize
+  gameTop
+  gameLeft
+  gameBottom
+  gameRight
+  getGameEl
+}

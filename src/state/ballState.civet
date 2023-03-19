@@ -1,7 +1,7 @@
 { createSignal } from "solid-js"
 { playerState } from "./playerState.civet"
 
-ballWidth := playerState.paddleHeight * 2
+ballWidth := playerState.paddleHeight() * 2
 ballRadius := ballWidth / 2
 initialVelocity := => (Math.max window.innerHeight, window.innerWidth) / 2
 [balls, setBalls] := createSignal [{ index: 0 }]
