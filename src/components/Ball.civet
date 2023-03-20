@@ -45,7 +45,7 @@ export Ball: Component := =>
     nextY := ballY() + ballVelocityY() * duration
     nextX := ballX() + ballVelocityX() * duration
 
-    contact := brickState.bricks().some (({ id, health: [health, setHealth] }) =>
+    contact := brickState.bricks().some (({ id, health: [health, setHealth], variant }) =>
       brick := brickState.getBrickDimensions id
       contact := health() is not 0 
         and nextY + ballState.ballRadius > brick.top
@@ -53,14 +53,15 @@ export Ball: Component := =>
         and nextX + ballState.ballRadius > brick.left
         and nextX - ballState.ballRadius < brick.right
       if (contact)
-        gameState.setScore gameState.score() + 1
-        setHealth health() - 1
-        if (health() is 0)
-          brickState.setBricksLeft brickState.bricksLeft() - 1
-          if (brickState.bricksLeft() is 0)
-            setBallDead true
-            gameState.setGameStatus "WINNER"
-            return
+        if variant is not "unbreakable"
+          gameState.setScore gameState.score() + 1
+          setHealth health() - 1
+          if (health() is 0)
+            brickState.setBricksLeft brickState.bricksLeft() - 1
+            if (brickState.bricksLeft() is 0)
+              setBallDead true
+              gameState.setGameStatus "WINNER"
+              return
         stillInContact := nextY + ballState.ballRadius > brick.top
           and nextY - ballState.ballRadius < brick.bottom
           and ballX() + ballState.ballRadius > brick.left

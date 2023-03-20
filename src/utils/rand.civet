@@ -1,0 +1,5 @@
+export rand := {
+  isOneIn: (oneIn: number) => Math.ceil(Math.random() * oneIn) is 1
+  inclusiveBetween: (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
+  arrayElement: <T>(array: Array<T>) => array[Math.floor(Math.random() * array.length)]
+}

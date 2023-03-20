@@ -1,6 +1,7 @@
-{ createSignal } from "solid-js"
+{ createSignal, createEffect } from "solid-js"
 { screenState } from "./screenState.civet"
 { memo } from "../utils/memo.civet"
+{ rand } from "../utils/rand.civet"
 
 initalBrickCount := 50
 brickBorder := 3
@@ -11,12 +12,36 @@ brickWidth := => brickLeftSpacing()
 brickLeft := => brickLeftSpacing()
 brickHeight := => brickTop()
 
-getInitialBricks := => ((Array.from { length: initalBrickCount }).map ((_, i) => ({
-  health: createSignal (Math.floor(Math.random() * 4))
-  id: i
-})))
+export type BrickVariant = "unbreakable" | "default"
+
+getInitialBricks := =>
+  variants: Array<{type: BrickVariant; left: number }> := [
+    { type: "unbreakable", left: 3 }
+  ]
+  (Array.from { length: initalBrickCount }).map ((_, i) =>
+    variant := do 
+      if rand.isOneIn(10)
+        randomVariant := rand.arrayElement(
+          variants.filter((element) => element.left > 0)
+        )
+        if randomVariant
+          randomVariant.left -= 1
+          randomVariant.type
+        else
+          "default" as const
+      else
+        "default" as const
+    {
+      variant
+      health: createSignal if variant is "unbreakable" then Infinity else rand.inclusiveBetween(0, 3)
+      id: i
+    }
+  )
 [bricks, setBricks] := createSignal getInitialBricks()
-[bricksLeft, setBricksLeft] := createSignal(bricks().filter(({ health: [health] }) => !!health()).length)
+getBricksLeft := => bricks().filter(({ health: [health], variant }) => 
+  health() is not 0 and variant is not "unbreakable"
+).length
+[bricksLeft, setBricksLeft] := createSignal getBricksLeft()
 
 getTopOfBrick := (id: number) =>
   brickHeight() * Math.floor(id / maxBricksPerRow())
@@ -53,5 +78,5 @@ export brickState := {
   getBrickDimensions
   reset: =>
     setBricks getInitialBricks()
-    setBricksLeft bricks().filter(({ health: [health] }) => !!health()).length
+    setBricksLeft getBricksLeft()
 }

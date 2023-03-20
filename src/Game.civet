@@ -19,8 +19,8 @@ export Game: Component := =>
     overflow: "hidden"
   }>
     <For each=brickState.bricks()>
-      ({ id, health: [health] }) =>
-        <Brick {id} {health()}>
+      ({ id, health: [health], variant }) =>
+        <Brick {id} {health()} {variant}>
     <For each=ballState.balls()>
       () =>
         <Ball>

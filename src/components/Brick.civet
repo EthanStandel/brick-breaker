@@ -1,10 +1,12 @@
 { Component } from "solid-js"
-{ brickState } from "../state/brickState.civet"
+{ brickState, BrickVariant } from "../state/brickState.civet"
 
-export Brick: Component<{ id: number; health: number; }> := (props) =>
+export Brick: Component<{ id: number; health: number; variant: BrickVariant }> := (props) =>
   y := brickState.getTopOfBrick props.id
   x := brickState.getLeftOfBrick props.id
   <div style={do
+    color := if props.variant is "unbreakable" then "black" else "white"
+    background := if props.variant is "unbreakable" then "white" else "black"
     display := if props.health is 0 then "none" else "flex"
     borderPattern := if props.health > 1 then "solid" else "dotted"
     {
@@ -14,13 +16,14 @@ export Brick: Component<{ id: number; health: number; }> := (props) =>
       transform: `translateX(${x}px) translateY(${y}px)`
       width: `${brickState.brickWidth() - brickState.brickBorder * 2}px`
       height: `${brickState.brickHeight() - brickState.brickBorder * 2}px`
-      border: `${brickState.brickBorder}px ${borderPattern} white`
+      border: `${brickState.brickBorder}px ${borderPattern} ${color}`
       display
       "justify-content": "center"
       "align-items": "center"
-      color: "white"
+      color
+      "font-weight": "bold"
       "font-size": `${brickState.brickHeight() - brickState.brickBorder * 2}px`
-      background: "black"
+      background
       "z-index": 3
     }
-  }>{props.health}
+  }>{if props.variant is "unbreakable" then "∞" else props.health}
