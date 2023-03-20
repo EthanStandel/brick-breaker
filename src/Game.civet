@@ -6,6 +6,7 @@
 { GameStatus } from "./components/GameStatus.civet"
 { Ball } from "./components/Ball.civet"
 { GithubLink } from "./components/GithubLink.civet"
+{ Mute } from "./components/Mute.civet"
 { screenState } from "./state/screenState.civet"
 
 export Game: Component := =>
@@ -26,4 +27,6 @@ export Game: Component := =>
         <Ball>
     <Player>
     <GameStatus>
+    <Mute>
     <GithubLink>
+

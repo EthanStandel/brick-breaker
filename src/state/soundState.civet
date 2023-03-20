@@ -1,0 +1,17 @@
+{ createSignal } from "solid-js"
+{ sounds } from "../utils/sounds.civet"
+
+[muted, setMuted] := createSignal false
+
+console.log muted, muted()
+
+export soundState := {
+  muted
+  setMuted
+  defaultBreak: (=> if !muted() then sounds.defaultBreak())
+  defaultHit: (=> if !muted() then sounds.defaultHit())
+  launch: (=> if !muted() then sounds.launch())
+  winner: (=> if !muted() then sounds.winner())
+  unbreakableHit: (=> if !muted() then sounds.unbreakableHit())
+  loser: (=> if !muted() then sounds.loser())
+}

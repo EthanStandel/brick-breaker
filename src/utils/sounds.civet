@@ -1,0 +1,20 @@
+defaultBreak := new Audio "/default-break.wav"
+defaultHit := new Audio "/default-hit.wav"
+launch := new Audio "/launch.wav"
+winner :=  new Audio "/winner.wav"
+unbreakableHit := new Audio "/unbreakable-hit.wav"
+loser := new Audio "/loser.wav"
+
+play := (audio: HTMLAudioElement) => {
+  audio.currentTime = 0
+  audio.play()
+}
+
+export sounds := {
+  defaultBreak: => play defaultBreak
+  defaultHit: => play defaultHit
+  launch: => play launch
+  winner: => play winner
+  unbreakableHit: => play unbreakableHit
+  loser: => play loser
+}

@@ -1,0 +1,15 @@
+{ type Component } from "solid-js"
+{ soundState } from "../state/soundState.civet"
+
+export Mute: Component := =>
+  <button
+    style={
+      all: "unset"
+      position: "fixed"
+      top: "25px"
+      right: "100px"
+      cursor: "pointer"
+    }
+    onclick=(=> soundState.setMuted !soundState.muted())
+    >
+      <img width="50" height="50" src={if soundState.muted() then "/muted.svg" else "/unmuted.svg"}>

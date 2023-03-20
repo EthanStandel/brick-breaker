@@ -6,7 +6,7 @@
 { onAnimationFrame } from "../utils/onAnimationFrame.civet"
 { globalEvent } from "../utils/globalEvent.civet"
 { screenState } from "../state/screenState.civet"
-
+{ soundState } from "../state/soundState.civet"
 
 export Ball: Component := =>
   totalBallVelocity := ballState.initialVelocity
@@ -20,11 +20,13 @@ export Ball: Component := =>
   createEffect(=>
     if ballDead()
       ballState.setLivingBalls untrack(ballState.livingBalls) - 1
-      if untrack(ballState.livingBalls) is 0
+      if untrack(ballState.livingBalls) is 0 and untrack(brickState.bricksLeft) is not 0
+        soundState.loser()
         gameState.setGameStatus "LOSER"
   )
 
   launch := =>
+    soundState.launch()
     setBallAttached false
     setBallVelocityX(
       1 + totalBallVelocity() * (ballX() - playerState.paddleCenter()) / playerState.paddleRadius()
@@ -53,15 +55,21 @@ export Ball: Component := =>
         and nextX + ballState.ballRadius > brick.left
         and nextX - ballState.ballRadius < brick.right
       if (contact)
-        if variant is not "unbreakable"
+        if variant is "unbreakable"
+          soundState.unbreakableHit()
+        else
           gameState.setScore gameState.score() + 1
           setHealth health() - 1
-          if (health() is 0)
+          if health() is 0
+            soundState.defaultBreak()
             brickState.setBricksLeft brickState.bricksLeft() - 1
             if (brickState.bricksLeft() is 0)
               setBallDead true
+              soundState.winner()
               gameState.setGameStatus "WINNER"
               return
+          else
+            soundState.defaultHit()
         stillInContact := nextY + ballState.ballRadius > brick.top
           and nextY - ballState.ballRadius < brick.bottom
           and ballX() + ballState.ballRadius > brick.left
@@ -98,7 +106,10 @@ export Ball: Component := =>
     ballDead()
   )
 
-  globalEvent "click", (=> if isMakingContactWithPlayer() and ballAttached() then launch())
+  globalEvent "click", (=>
+    if isMakingContactWithPlayer() and ballAttached()
+      launch()
+  )
 
   <div style={
     transition: "opacity 0.25s"
