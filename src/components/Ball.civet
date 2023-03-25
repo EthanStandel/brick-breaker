@@ -121,9 +121,9 @@ export Ball: Component := =>
     top: "0px"
     left: "0px"
     position: "absolute"
-    "will-change": "transform"
     "box-shadow": `${-ballVelocityX() / 100}px ${-ballVelocityY() / 100}px 20px -20px white`
     transform: `translateY(calc(${ballY()}px - 50%)) translateX(calc(${ballX()}px - 50%))`
+    "will-change": "transform"
   }>
     <div style={do
       trailSize := if ballAttached() then 0 else ballState.ballWidth * 2
@@ -146,5 +146,6 @@ export Ball: Component := =>
         width: `${trailSize}px`
         "border-radius": `${ballState.ballRadius}px`
         "z-index": -1
+        "will-change": "transform"
       }
     }>
